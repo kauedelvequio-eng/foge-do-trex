@@ -453,18 +453,28 @@ const ESTRELA = sprite([
   ".oo.....oo.",
 ], { o:"#8a6410", y:"#ffd84d" });
 
-/* coraçãozinho que sobe da cabeça do cara no vaso */
-const CORACAO = sprite([
-  ".rr.rr.",
-  "rrbrrrr",
-  "rbrrrrr",
-  "rrrrrrr",
-  ".rrrrr.",
-  "..rrr..",
-  "...r...",
-], { r:"#d8232a", b:"#ff8a7a" });
-// mesmo desenho todo escuro, para o contorno destacar da parede bege
-const CORACAO_BORDA = sprite(CORACAO.rows, { r:"#5a1414", b:"#5a1414" });
+/* métricas que sobem da cabeça do cara no vaso: cifrão e seta de alta, em verde de resultado */
+const CIFRAO = sprite([
+  "..g..",
+  ".bgg.",
+  "g.g..",
+  ".bg..",
+  "..gb.",
+  "..g.g",
+  ".ggb.",
+  "..g..",
+], { g:"#1fbf5a", b:"#7dffa8" });
+const SETA = sprite([
+  "...g...",
+  "..bgg..",
+  ".bgggg.",
+  "ggggggg",
+  "..ggg..",
+  "..ggg..",
+  "..ggg..",
+], { g:"#1fbf5a", b:"#7dffa8" });
+// mesmo desenho todo escuro, para o contorno destacar do fundo
+const METRICAS = [CIFRAO, SETA].map(sp => ({ sp, borda: sprite(sp.rows, { g:"#0b3d1f", b:"#0b3d1f" }) }));
 
 /* o criativo 300x250 de 150KB, bombado no limite do peso: chega com 3 estrelas e segura o que vier.
    é um arquivo com a ponta dobrada, cara de bravo e os braços em double biceps */
@@ -588,7 +598,7 @@ function novoJogo(){
     itens: [],
     parts: [],
     coracoes: [],
-    corT: 0.6,          // próximo coraçãozinho
+    corT: 0.6,          // próxima métrica subindo
     spawnT: 0.8,
     itemT: 3.2,
     portao: null,       // portão de saída
@@ -735,7 +745,7 @@ function spawnItem(){
 
 function soltarCoracao(x, y){
   game.coracoes.push({
-    x, y,
+    x, y, m: METRICAS[(Math.random()*METRICAS.length)|0],
     vy: -(38 + Math.random()*26),
     fase: Math.random()*6,
     px: Math.random() < 0.35 ? 5 : 4,
@@ -888,7 +898,7 @@ function atualizar(dt){
     p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 220 * dt;
   }
 
-  // coraçõezinhos: de vez em quando, e bem mais com o criativo por perto
+  // métricas subindo: de vez em quando, e bem mais com o criativo por perto
   g.corT -= dt;
   if (g.corT <= 0){
     soltarCoracao(PLAYER_X + (Math.random()-.5)*24, g.y - 118);
@@ -1164,14 +1174,14 @@ function drawCena(){
       ctx.restore();
     }
 
-    // coraçõezinhos balançando enquanto sobem
+    // métricas balançando enquanto sobem
     for (const c of g.coracoes){
       const a = Math.min(1, c.t * 5, (c.vida - c.t) * 2);
-      const w = CORACAO.w * c.px;
+      const w = c.m.sp.w * c.px;
       const x = c.x + Math.sin(c.fase) * 7 - w/2, b = Math.max(2, c.px/2);
       ctx.globalAlpha = a;
-      for (const [dx, dy] of [[-b,0],[b,0],[0,-b],[0,b]]) draw(CORACAO_BORDA, x+dx, c.y+dy, c.px);
-      draw(CORACAO, x, c.y, c.px, a);
+      for (const [dx, dy] of [[-b,0],[b,0],[0,-b],[0,b]]) draw(c.m.borda, x+dx, c.y+dy, c.px);
+      draw(c.m.sp, x, c.y, c.px, a);
     }
 
     // partículas
