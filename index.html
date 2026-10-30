@@ -224,8 +224,9 @@
   .rel-kpis b{display:block; font-size:17px; font-weight:400; color:#fff; margin-top:3px; letter-spacing:.02em}
   #rel-roas.bom{color:#4ad98a} #rel-roas.mau{color:#ff3d7f}
   .rel-diag{margin-top:6px; font-size:10px; line-height:1.45; color:#c9d2f0}
-  button.zap{border-color:#25d366; color:#25d366}
-  button.zap:hover{background:#25d366; color:#0b1124; border-color:#25d366}
+  button.zap{display:inline-flex; align-items:center; gap:7px}
+  button.zap svg{width:14px; height:14px; color:#25d366; flex:none}
+  button.zap:hover{border-color:#25d366}
   @media (max-height:480px){
     .relatorio{padding:5px 10px 6px}
     .rel-tit{margin-bottom:3px}
@@ -275,6 +276,7 @@
         <span class="rot bom">PEGA</span>
         <span class="it"><i data-sp="like"></i>like <b class="bom">+50 pontos</b></span>
         <span class="it"><i data-sp="cafe"></i>café <b class="bom">+1 vida</b></span>
+        <span class="it"><i data-sp="chefe"></i>pinguim chefe <b class="bom">+300, aparece do nada</b></span>
         <span class="it"><i data-sp="estrela"></i>estrela <b class="bom">3 chamam o criativo de 150KB</b></span>
       </div>
     </div>
@@ -322,7 +324,7 @@
     <ol class="rank" id="end-rank" data-ranking hidden></ol>
     <div class="row">
       <button class="primary" id="btn-again">TENTAR DE NOVO</button>
-      <button class="zap" id="btn-zap">MANDAR NO ZAP</button>
+      <button class="zap" id="btn-zap"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 13.9c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>COMPARTILHAR</button>
       <button id="btn-rank2" data-ranking hidden>RANKING</button>
       <button id="btn-menu">MUDAR DIFICULDADE</button>
     </div>
@@ -524,6 +526,25 @@ const HATER = sprite([
   "tttttttttttttttt",
 ], { h:"#1a1410", b:"#2a1d14", s:"#e0a77a", e:"#ffffff", p:"#1a1410", o:"#b8784e", m:"#7a1420", w:"#ffffff", t:"#c0263a" });
 
+/* pinguim chefe: surge do nada numa nuvem de fumaça, de gravata, e passa deslizando. pegou, ganhou aprovação */
+const CHEFE = sprite([
+  "....kkkkkk....",
+  "...kkkkkkkk...",
+  "..kkwwkkwwkk..",
+  "..kkwpkkpwkk..",
+  "..kkkkyykkkk..",
+  ".kkkkyyyykkkk.",
+  ".kkwwwwwwwwkk.",
+  "kkwwwwrrwwwwkk",
+  "kkwwwwrrwwwwkk",
+  "kkwwwrrrrwwwkk",
+  ".kwwwwrrwwwwk.",
+  ".kwwwwwwwwwwk.",
+  "..kwwwwwwwwk..",
+  "...kkkkkkkk...",
+  "..yyy....yyy..",
+], { k:"#14182b", w:"#f4f6ff", p:"#14182b", y:"#ffb020", r:"#d8232a" });
+
 const BERROS = ["SAI DA MINHA TIMELINE!", "QUE ANÚNCIO RUIM!", "VOU DENUNCIAR!", "PROPAGANDA DE NOVO?"];
 const COMENTARIOS = ["unfollow", "denunciei", "pulei o ad", "que vergonha", "ninguém liga", "flopou"];
 
@@ -662,6 +683,9 @@ function novoJogo(){
     itemT: 3.2,
     portao: null,       // portão de saída
     hater: null,        // janela do hater aberta na parede
+    chefeT: q.has("chefe") ? 1 : 12 + Math.random() * 10,   // segundos até o pinguim chefe surgir
+    chefes: 0,
+    avisoTxt: "",
     haterT: q.has("hater") ? 1 : cfg.hater[0] + 4,   // segundos até ele aparecer (?hater=1 chama logo)
     acabou: false,
     motivo: "",
@@ -920,6 +944,18 @@ function atualizar(dt){
     }
   }
 
+  // pinguim chefe: surge do nada no meio da pista, numa nuvem de fumaça
+  if (!g.portao){
+    g.chefeT -= dt;
+    if (g.chefeT <= 0){
+      const lane = (Math.random()*LANES)|0, px = 5, x = Math.round(W * 0.8);
+      g.itens.push({ tipo: "chefe", sp: CHEFE, px, x, lane, y: laneY(lane), w: CHEFE.w*px, h: CHEFE.h*px, oy: 12, bob: 0, extra: 70 });
+      particulas(x, laneY(lane) - 30, "#e6ebff", 22);
+      SFX.pick();
+      g.chefeT = 20 + Math.random() * 12;
+    }
+  }
+
   const pBox = { x: PLAYER_X - 18, y: g.y - 52, w: 36, h: 64 };
   if (g.escudo > 0) pBox.w += 130;  // o criativo segura o que vem pela frente
 
@@ -957,12 +993,17 @@ function atualizar(dt){
   // itens
   for (let i = g.itens.length - 1; i >= 0; i--){
     const it = g.itens[i];
-    it.x -= v * dt;
+    it.x -= (v + (it.extra || 0) * ESC) * dt;
     it.bob += dt * 5;
     if (it.x < -60){ g.itens.splice(i,1); continue; }
     if (bateu(pBox, caixa(it, .12, .14))){
       g.itens.splice(i,1);
-      if (it.tipo === "cafe"){
+      if (it.tipo === "chefe"){
+        g.bonus += 300; g.chefes++;
+        g.aviso = 1.8; g.avisoTxt = "APROVADO PELO CHEFE! +300";
+        particulas(it.x, it.y-20, "#ffb020", 24);
+        SFX.life();
+      } else if (it.tipo === "cafe"){
         game.vidas = Math.min(game.maxVidas, game.vidas + 1);
         game.cafes++;
         SFX.life(); particulas(it.x, it.y-20, "#ff3d7f", 16);
@@ -970,7 +1011,7 @@ function atualizar(dt){
         g.estrelas++;
         particulas(it.x, it.y-20, "#ffd84d", 16);
         if (g.estrelas >= 3){
-          g.estrelas = 0; g.escudo = 9; g.aviso = 1.8; g.criativos++;
+          g.estrelas = 0; g.escudo = 9; g.aviso = 1.8; g.avisoTxt = "CRIATIVO 150KB!"; g.criativos++;
           for (let k = 0; k < 9; k++) soltarCoracao(PLAYER_X + (Math.random()-.5)*70, g.y - 110 - Math.random()*30);
           SFX.life();
         } else SFX.pick();
@@ -1223,6 +1264,17 @@ function drawCriativo(){
   plaquinha("CRIATIVO 300x250", cx, y - 26, "#ff3d7f");
 }
 
+// pinguim chefe gingando de um lado pro outro, com plaquinha
+function drawChefe(it){
+  sombra(it.x, it.y + 10, it.w * .7, .3);
+  ctx.save();
+  ctx.translate(it.x, it.y + 12);
+  ctx.rotate(Math.sin(it.bob * 1.6) * 0.14);
+  draw(it.sp, -it.w/2, -it.h, it.px);
+  ctx.restore();
+  plaquinha("PINGUIM CHEFE", it.x, it.y - it.h - 14, "#b96d12");
+}
+
 // janela "ao vivo" na parede com o hater berrando, e a mira piscando na raia
 function drawHater(){
   const h = game.hater;
@@ -1301,6 +1353,7 @@ function drawCena(){
     }
     // itens (flutuando)
     for (const it of g.itens){
+      if (it.tipo === "chefe"){ drawChefe(it); continue; }
       const fy = Math.sin(it.bob) * 5;
       sombra(it.x, it.y + 10, it.w * .7, .25);
       ctx.save();
@@ -1321,9 +1374,9 @@ function drawCena(){
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.font = "700 " + (26 + (1 - k) * 14) + "px ui-monospace, Consolas, monospace";
       ctx.lineWidth = 6; ctx.strokeStyle = "#0b1124";
-      ctx.strokeText("CRIATIVO 150KB!", W/2, 150);
-      ctx.fillStyle = "#ff3d7f";
-      ctx.fillText("CRIATIVO 150KB!", W/2, 150);
+      ctx.strokeText(g.avisoTxt, W/2, 150);
+      ctx.fillStyle = g.avisoTxt.startsWith("APROVADO") ? "#ffb020" : "#ff3d7f";
+      ctx.fillText(g.avisoTxt, W/2, 150);
       ctx.restore();
     }
 
@@ -1581,7 +1634,7 @@ async function abrirRanking(d, volta){
 }
 
 // desenha cada sprite da legenda num canvas pequeno
-const MINIS = { hater:HATER, trex:FOTO_TREX, maluco:FOTO_MALUCO, like:LIKE, cafe:CAFE, estrela:ESTRELA };
+const MINIS = { chefe:CHEFE, hater:HATER, trex:FOTO_TREX, maluco:FOTO_MALUCO, like:LIKE, cafe:CAFE, estrela:ESTRELA };
 for (const alvo of document.querySelectorAll("[data-sp]")){
   const sp = MINIS[alvo.dataset.sp];
   if (!sp) continue;
