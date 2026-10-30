@@ -224,9 +224,6 @@
   .rel-kpis b{display:block; font-size:17px; font-weight:400; color:#fff; margin-top:3px; letter-spacing:.02em}
   #rel-roas.bom{color:#4ad98a} #rel-roas.mau{color:#ff3d7f}
   .rel-diag{margin-top:6px; font-size:10px; line-height:1.45; color:#c9d2f0}
-  button.zap{display:inline-flex; align-items:center; gap:7px}
-  button.zap svg{width:14px; height:14px; color:#25d366; flex:none}
-  button.zap:hover{border-color:#25d366}
   @media (max-height:480px){
     .relatorio{padding:5px 10px 6px}
     .rel-tit{margin-bottom:3px}
@@ -324,7 +321,6 @@
     <ol class="rank" id="end-rank" data-ranking hidden></ol>
     <div class="row">
       <button class="primary" id="btn-again">TENTAR DE NOVO</button>
-      <button class="zap" id="btn-zap"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 13.9c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>COMPARTILHAR</button>
       <button id="btn-rank2" data-ranking hidden>RANKING</button>
       <button id="btn-menu">MUDAR DIFICULDADE</button>
     </div>
@@ -588,7 +584,7 @@ const TIPOS = {
     "Atropelado pelo maluco. Ele queria a peça pra ontem.",
   ] },
 };
-TIPOS.comentario = { balao:true, w:0, h:34, extra:150, zig:false, cor:"#ff3d7f", fins:[
+TIPOS.comentario = { balao:true, w:0, h:44, extra:40, zig:false, cor:"#ff3d7f", fins:[
   "Afogado em comentário de hater. Nem o SAC deu conta.",
   "O hater te cancelou. Tá no trending, mas pelo motivo errado.",
 ] };
@@ -932,10 +928,10 @@ function atualizar(dt){
     if (h.t < 1.25) h.lane = g.lane;              // mira até a hora de atirar
     if (!h.jogou && h.t >= 1.25){
       h.jogou = true;
-      const texto = COMENTARIOS[(Math.random()*COMENTARIOS.length)|0];
-      ctx.font = "700 14px " + FONTE;
+      const texto = COMENTARIOS[(Math.random()*COMENTARIOS.length)|0].toUpperCase();
+      ctx.font = "700 20px " + FONTE;
       g.obst.push({ tipo: "comentario", t: TIPOS.comentario, texto,
-        x: h.x, lane: h.lane, y: 120, w: ctx.measureText(texto).width + 34, h: 34, oy: -6, rot: 0 });
+        x: h.x, lane: h.lane, y: 120, w: ctx.measureText(texto).width + 50, h: 44, oy: -4, rot: 0 });
       SFX.lane();
     }
     if (h.t >= 1.9){
@@ -984,6 +980,8 @@ function atualizar(dt){
       }
       if (g.inv <= 0){
         g.obst.splice(i,1);
+        // o comentário que acertou fica grande na tela pra todo mundo ler
+        if (o.texto){ g.aviso = 1.8; g.avisoTxt = "“" + o.texto + "”"; }
         levarDano(o);
         if (g.acabou) return;
       }
@@ -1328,10 +1326,10 @@ function drawBalao(o){
   ctx.beginPath(); ctx.moveTo(x + w - 24, y + hh + 2); ctx.lineTo(x + w - 8, y + hh + 14); ctx.lineTo(x + w - 10, y + hh + 2); ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#fffaf0"; ctx.fillRect(x, y, w, hh);
-  ctx.fillStyle = "#c0263a"; ctx.font = "700 14px " + FONTE;
+  ctx.fillStyle = "#c0263a"; ctx.font = "700 20px " + FONTE;
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(o.texto, o.x + 8, y + hh/2 + 1);
-  ctx.fillText("✖", x + 13, y + hh/2 + 1);
+  ctx.fillText(o.texto, o.x + 11, y + hh/2 + 1);
+  ctx.fillText("✖", x + 17, y + hh/2 + 1);
   ctx.restore();
 }
 
@@ -1479,16 +1477,6 @@ function relatorio(g){
   er.textContent = virgula(r.toFixed(1)) + "x";
   er.className = r >= 2.5 ? "bom" : r < 1 ? "mau" : "";
   el("rel-diag").textContent = diagnostico(g, r);
-}
-
-// manda o placar no WhatsApp com o link do jogo (no computador abre o WhatsApp Web)
-function compartilhar(){
-  const g = game;
-  const link = location.origin + location.pathname;
-  const texto = (g.venceu ? "Converti" : "Virei lanche de T-rex") +
-    " no Mídia e Performance: " + g.pontos + " pontos, ROAS " + virgula((g.roas || 0).toFixed(1)) + "x" +
-    " no " + cfg.label.toLowerCase() + ". Duvido você bater 🦖\n" + link;
-  window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank", "noopener");
 }
 
 function telaFim(){
@@ -1668,7 +1656,6 @@ for (const b of document.querySelectorAll("[data-dif]")){
 el("btn-start").addEventListener("click", () => { salvarNome(el("nome").value); comecar(); });
 el("btn-again").addEventListener("click", comecar);
 el("btn-menu").addEventListener("click", telaInicio);
-el("btn-zap").addEventListener("click", compartilhar);
 el("btn-resume").addEventListener("click", () => pausar(false));
 
 // ranking: nome, telas e abas
