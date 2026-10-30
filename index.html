@@ -26,6 +26,11 @@
   #app::after{content:""; position:absolute; inset:0; border:1px solid #2b355e; pointer-events:none; z-index:9}
   canvas{display:block; width:300px; height:250px}
 
+  /* aberto pelo link (fora do espaço do anúncio): centraliza e amplia pra caber na tela */
+  html.pagina, html.pagina body{width:100%; height:100%; background:#070b1c}
+  html.pagina body{display:flex; align-items:center; justify-content:center}
+  html.pagina #app{flex:none; box-shadow:0 20px 60px #000a}
+
   #touch{position:absolute; inset:0; display:none}
   #touch.on{display:block}
 
@@ -72,7 +77,7 @@
   <div class="screen on" id="scr-start">
     <div class="eyebrow"><i>★</i> VAI SER MÍDIA E PERFORMANCE</div>
     <h1>Corre que é T-REX<small>DE VASO E TUDO</small></h1>
-    <p class="lead">Desvia do <i data-sp="trex"></i> T-rex e do <i data-sp="maluco"></i> maluco.<br>Pega 3 <i data-sp="estrela"></i> e chama a <b>Dilma boladona</b>.</p>
+    <p class="lead">Desvia do <i data-sp="trex"></i> T-rex e do <i data-sp="maluco"></i> maluco.<br>Pega 3 <i data-sp="estrela"></i> e chama o <b>criativo de 150KB</b>.</p>
     <button class="primary" id="btn-start">JOGAR</button>
     <div class="keys">toque em cima ou embaixo pra trocar de raia</div>
     <button class="link" data-cta>SAIBA MAIS ›</button>
@@ -121,9 +126,22 @@ const CFG = { speed:92, ramp:20, spawn:1.25, dens:0.55, lives:3, meta:500 };
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const dpr = Math.min(window.devicePixelRatio || 1, 3);
-canvas.width = W * dpr; canvas.height = H * dpr;
-ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-ctx.imageSmoothingEnabled = false;
+const app = document.getElementById("app");
+
+// dentro do anúncio a janela tem 300x250; maior que isso, é a página aberta pelo link
+function caber(){
+  const pagina = innerWidth > W + 20 || innerHeight > H + 20;
+  document.documentElement.classList.toggle("pagina", pagina);
+  const k = pagina ? Math.min((innerWidth - 32) / W, (innerHeight - 32) / H) : 1;
+  app.style.transform = pagina ? "scale(" + k + ")" : "";
+  // o canvas ganha resolução junto com a escala, pra não borrar ampliado
+  const res = Math.min(dpr * k, 4);
+  canvas.width = Math.round(W * res); canvas.height = Math.round(H * res);
+  ctx.setTransform(res, 0, 0, res, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+}
+caber();
+addEventListener("resize", caber);
 
 /* ====================================================================
    2. PIXEL ART  (cada sprite é uma matriz de caracteres + paleta)
@@ -281,27 +299,34 @@ const CORACAO = sprite([
 const CORACAO_BORDA = sprite(CORACAO.rows, { r:"#5a1414", b:"#5a1414" });
 const CORACAO_OFF = sprite(CORACAO.rows, { r:"#3a4570", b:"#4a5585" });
 
-/* a presidenta aparece quando junta 3 estrelas e segura os T-rex */
-const DILMA = sprite([
-  ".....oooooooo.....",
-  "ooo.ohhhhhhhho.ooo",
-  "oso.ohhhhhhhho.oso",
-  "oso.ohhsssshho.oso",
-  "oso.ohsessesho.oso",
-  "oso.ohssmmssho.oso",
-  ".ossohhsssshhosso.",
-  ".oss.oh.ss.ho.sso.",
-  ".ossorrrrrrrrosso.",
-  "..o.orygrrrrro.o..",
-  "....orrygrrrro....",
-  "....orrrygrrro....",
-  "....orrrrygrro....",
-  "....orrrrrygro....",
-  ".....orrrrrro.....",
-  ".....oll..llo.....",
-  ".....oll..llo.....",
-  ".....occ..cco.....",
-], { o:"#2f2a2a", h:"#6a4634", s:"#ecc5a4", e:"#2a2320", m:"#a9553f", r:"#cf2d3a", y:"#f5d327", g:"#1c9e4a", l:"#ecc5a4", c:"#2f3a4a" });
+/* o criativo 300x250 de 150KB, bombado no limite do peso: chega com 3 estrelas e segura os T-rex.
+   é um arquivo com a ponta dobrada, cara de bravo e os braços em double biceps */
+const ARQ_CORPO = [
+  "oooooooooo.....",
+  "oppppppppPo....",
+  "opppppppppPo...",
+  "oppppppppppPo..",
+  "oppppppppppPPPo",
+  "opppppppppppppo",
+  "opbbpppppbbpppo",
+  "oppeppppppepppo",
+  "opppppppppppppo",
+  "oppppmmmmpppppo",
+  "opppppppppppppo",
+  "orrrrrrrrrrrrro",
+  "orrrrrrrrrrrrro",
+  "orrrrrrrrrrrrro",
+  "orrrrrrrrrrrrro",
+  "opppppppppppppo",
+  "ooooooooooooooo",
+  "....oco.oco....",
+  "...occo.occo...",
+];
+const ARQ_BRACO = ["....", "ooo.", "oao.", "oao.", "oao.", "oao.", ".oaa", ".oaa", ".oaa", "..o."];
+const espelho = t => t.split("").reverse().join("");
+const CRIATIVO = sprite(ARQ_CORPO.map((r, i) => (ARQ_BRACO[i] || "....") + r + espelho(ARQ_BRACO[i] || "....")),
+  { o:"#1b2240", p:"#ffffff", P:"#c9d2f0", b:"#1b2240", e:"#111111", m:"#ff3d7f", r:"#ff3d7f", a:"#ffffff", c:"#3ee6ff" });
+const CRIATIVO_FAIXA = 11;   // linha onde começa a faixa rosa com o peso escrito
 
 /* tipos de obstáculo: quadros da animação, velocidade extra em relação ao chão e frases de fim */
 const TIPOS = {
@@ -370,7 +395,7 @@ let state = ST.START;
 let game = null;
 // demo = a cena que anda sozinha atrás da tela inicial
 function novoJogo(demo){
-  // atalho de teste: ?escudo=1 já começa com a Dilma
+  // atalho de teste: ?escudo=1 já começa com o criativo em campo
   const escudoURL = !demo && new URLSearchParams(location.search).has("escudo");
   game = {
     demo: !!demo,
@@ -378,7 +403,7 @@ function novoJogo(demo){
     t: 0, scroll: 0, dist: 0,
     vidas: CFG.lives, maxVidas: CFG.lives,
     pontos: 0, bonus: 0, frangos: 0,
-    estrelas: 0,          // 3 chamam a Dilma
+    estrelas: 0,          // 3 chamam o criativo
     escudo: escudoURL ? 30 : 0,   // segundos de proteção restantes
     aviso: 0,
     lane: 1, laneAlvo: 1,
@@ -581,7 +606,7 @@ function atualizar(dt){
   }
 
   const pBox = { x: PLAYER_X - 8, y: g.y - 22, w: 16, h: 28 };
-  if (g.escudo > 0) pBox.w += 40;   // a Dilma segura o que vem pela frente
+  if (g.escudo > 0) pBox.w += 40;   // o criativo segura o que vem pela frente
 
   for (let i = g.obst.length - 1; i >= 0; i--){
     const o = g.obst[i];
@@ -600,7 +625,7 @@ function atualizar(dt){
     if (o.x < -40){ g.obst.splice(i,1); g.bonus += 2; continue; }
     if (g.demo) continue;
     if (bateu(pBox, caixa(o, .2, .14))){
-      if (g.escudo > 0){                       // barrado pela presidenta
+      if (g.escudo > 0){                       // barrado pelo criativo
         g.obst.splice(i,1);
         g.bonus += 15;
         particulas(o.x - 6, o.y - 12, "#ffd84d", 14);
@@ -647,7 +672,7 @@ function atualizar(dt){
     p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 100 * dt;
   }
 
-  // coraçõezinhos: de vez em quando, e bem mais com a Dilma por perto
+  // coraçõezinhos: de vez em quando, e bem mais com o criativo por perto
   g.corT -= dt;
   if (g.corT <= 0){
     soltarCoracao(PLAYER_X + (Math.random()-.5)*10, g.y - 40);
@@ -844,21 +869,28 @@ function plaquinha(texto, cx, topo, cor){
   ctx.restore();
 }
 
-// a presidenta entra na frente e segura os T-rex
-function drawDilma(){
+// o criativo de 150KB entra na frente e segura os T-rex
+function drawCriativo(){
   const g = game;
-  const w = DILMA.w * PX, h = DILMA.h * PX;
-  const cx = PLAYER_X + 30;
+  const w = CRIATIVO.w * PX, h = CRIATIVO.h * PX;
+  const cx = PLAYER_X + 32;
   const bob = Math.sin(g.t * 7) * 1.5;
-  const y = g.y - h + 9 + bob;
+  const y = Math.round(g.y - h + 9 + bob);
   const acabando = g.escudo < 2 && Math.floor(g.t * 9) % 2 === 0;
-  sombra(cx, g.y + 5, 24, .16);
+  sombra(cx, g.y + 5, 28, .3);
   if (acabando) return;
   ctx.save();
-  ctx.shadowColor = "#ffd84d"; ctx.shadowBlur = 8;
-  draw(DILMA, cx - w/2, y, PX);
+  ctx.shadowColor = "#3ee6ff"; ctx.shadowBlur = 8;
+  draw(CRIATIVO, cx - w/2, y, PX);
   ctx.restore();
-  plaquinha("DILMA BOLADONA", cx, y - 14, "#cf2d3a");
+  // o peso escrito na faixa rosa
+  ctx.save();
+  ctx.font = "700 7px " + FONTE;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("150KB", cx, y + (CRIATIVO_FAIXA + 2) * PX);
+  ctx.restore();
+  plaquinha("CRIATIVO 300x250", cx, y - 14, "#ff3d7f");
 }
 
 function drawHUD(){
@@ -919,9 +951,9 @@ function drawCena(){
   }
   drawPortao();
   drawJogador();
-  if (g.escudo > 0) drawDilma();
+  if (g.escudo > 0) drawCriativo();
 
-  // aviso de que a Dilma chegou
+  // aviso de que o criativo chegou
   if (g.aviso > 0){
     const k = Math.min(1, (1.8 - g.aviso) * 6);
     ctx.save();
@@ -929,9 +961,9 @@ function drawCena(){
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.font = "700 " + Math.round(17 + (1 - k) * 8) + "px ui-monospace, Consolas, monospace";
     ctx.lineWidth = 4; ctx.strokeStyle = "#fffaf0";
-    ctx.strokeText("DILMA BOLADONA", W/2, 82);
-    ctx.fillStyle = "#cf2d3a";
-    ctx.fillText("DILMA BOLADONA", W/2, 82);
+    ctx.strokeText("CRIATIVO 150KB!", W/2, 82);
+    ctx.fillStyle = "#ff3d7f";
+    ctx.fillText("CRIATIVO 150KB!", W/2, 82);
     ctx.restore();
   }
 

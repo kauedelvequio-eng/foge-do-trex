@@ -1,8 +1,8 @@
 # Vai ser Mídia e Performance
 
 Banner jogável 300x250: o cara no vaso desliza pelo painel de mídia desviando
-do T-rex e do maluco. Junte 3 estrelas e a Dilma boladona entra na frente
-segurando tudo. A linha de chegada é a CONVERSÃO.
+do T-rex e do maluco. Junte 3 estrelas e o criativo 300x250 de 150KB, bombado no limite
+do peso, entra na frente segurando tudo. A linha de chegada é a CONVERSÃO.
 
 ## Arquivos
 
@@ -14,7 +14,7 @@ segurando tudo. A linha de chegada é a CONVERSÃO.
 ## Rodar
 
 Abrir o `index.html` no navegador resolve. Atalho de teste: `?escudo=1` já
-começa com a Dilma em campo.
+começa com o criativo em campo.
 
 ## Regras de banner atendidas
 
