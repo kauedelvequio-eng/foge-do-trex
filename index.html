@@ -207,6 +207,14 @@
   .foot{color:#6a75a4}
   #touch .tz span{color:#ffffff10}
   #gira .ico{color:#3ee6ff}
+  .nome-in{background:#141b3d; color:#e6ebff; border-color:#2b355e}
+  .nome-in::placeholder{color:#6a75a4}
+  .nome-in:focus{outline-color:#3ee6ff}
+  .rank li{background:#141b3d; border-color:#2b355e}
+  .rank .n,.rank .p{color:#e6ebff}
+  .rank li.eu{background:#14254a; border-color:#3ee6ff}
+  .rank li:nth-child(1) .pos{color:#ffd84d}
+  .rank-msg b{color:#3ee6ff}
 </style>
 </head>
 <body>
@@ -247,8 +255,8 @@
       </div>
       <div class="grupo">
         <span class="rot bom">PEGA</span>
-        <span class="it"><i data-sp="frango"></i>frango <b class="bom">+50 pontos</b></span>
-        <span class="it"><i data-sp="banana"></i>banana <b class="bom">+1 vida</b></span>
+        <span class="it"><i data-sp="like"></i>like <b class="bom">+50 pontos</b></span>
+        <span class="it"><i data-sp="cafe"></i>café <b class="bom">+1 vida</b></span>
         <span class="it"><i data-sp="estrela"></i>estrela <b class="bom">3 chamam o criativo de 150KB</b></span>
       </div>
     </div>
@@ -404,30 +412,34 @@ function cartao(c, img, cx, base, w, h, cor, giro){
   c.restore();
 }
 
-const FRANGO = sprite([
-  "....oooo....",
-  "..oommmmoo..",
-  ".ommmmmmmmo.",
-  ".ommmmmmmmo.",
-  ".ommmmmmMMo.",
-  "..ommmmMMo..",
-  "...obbbo....",
-  "...obbbo....",
-  "..obbbbbo...",
-  "..obbbbbo...",
-  "...ooooo....",
-], { o:"#2a1407", m:"#c2702e", M:"#8e4a1c", b:"#efe3c4" });
+/* like: joinha azul, vale 50 pontos */
+const LIKE = sprite([
+  "....oo......",
+  "...obbo.....",
+  "...obbo.....",
+  "..obbo......",
+  "oooobbooooo.",
+  "occobbbbbbbo",
+  "occobbbbbbo.",
+  "occobbbbbbbo",
+  "occobbbbbbo.",
+  "occobbbbbbo.",
+  "oooooooooo..",
+], { o:"#0d2a5c", b:"#4a8cf0", c:"#1f4fa8" });
 
-const BANANA = sprite([
-  "......ooo...",
-  ".....oyyo...",
-  "....oyyyo...",
-  ".ooyyyyyo...",
-  ".oyyyyyo....",
-  ".oyyyyo.....",
-  "..oyyo......",
-  "...oo.......",
-], { o:"#6b5410", y:"#e8c75a" });
+/* café: o combustível da agência, devolve uma vida */
+const CAFE = sprite([
+  "..w..w......",
+  "...w..w.....",
+  "............",
+  "oooooooo....",
+  "okkkkkkooo..",
+  "ommmmmmo.o..",
+  "ommmmmmo.o..",
+  "ommmmmmooo..",
+  "ommmmmmo....",
+  ".oooooo.....",
+], { o:"#1b2240", m:"#ff3d7f", k:"#6b3a1e", w:"#c9d2f0" });
 
 const ESTRELA = sprite([
   "....ooo....",
@@ -560,7 +572,7 @@ function novoJogo(){
     maxVidas: cfg.lives,
     pontos: 0,
     bonus: 0,
-    frangos: 0,
+    likes: 0,
     estrelas: 0,          // 3 chamam o criativo
     escudo: q.has("escudo") ? 30 : 0,   // segundos de proteção restantes
     aviso: 0,             // tempo do aviso na tela
@@ -712,11 +724,11 @@ function spawnOnda(){
 
 function spawnItem(){
   const lane = (Math.random()*LANES)|0;
-  const pote = ["frango", "frango"];
-  if (game.vidas < game.maxVidas) pote.push("banana");
+  const pote = ["like", "like"];
+  if (game.vidas < game.maxVidas) pote.push("cafe");
   if (game.escudo <= 0) pote.push("estrela", "estrela", "estrela");
   const tipo = pote[(Math.random()*pote.length)|0];
-  const sp = tipo === "banana" ? BANANA : tipo === "estrela" ? ESTRELA : FRANGO;
+  const sp = tipo === "cafe" ? CAFE : tipo === "estrela" ? ESTRELA : LIKE;
   const px = 5;
   game.itens.push({ tipo, sp, px, x: W + 40, lane, y: laneY(lane), w: sp.w*px, h: sp.h*px, oy: 12, bob: Math.random()*6 });
 }
@@ -850,9 +862,9 @@ function atualizar(dt){
     if (it.x < -60){ g.itens.splice(i,1); continue; }
     if (bateu(pBox, caixa(it, .12, .14))){
       g.itens.splice(i,1);
-      if (it.tipo === "banana"){
+      if (it.tipo === "cafe"){
         game.vidas = Math.min(game.maxVidas, game.vidas + 1);
-        SFX.life(); particulas(it.x, it.y-20, "#e8c75a", 16);
+        SFX.life(); particulas(it.x, it.y-20, "#ff3d7f", 16);
       } else if (it.tipo === "estrela"){
         g.estrelas++;
         particulas(it.x, it.y-20, "#ffd84d", 16);
@@ -862,8 +874,8 @@ function atualizar(dt){
           SFX.life();
         } else SFX.pick();
       } else {
-        game.frangos++; game.pontos += 50;
-        SFX.pick(); particulas(it.x, it.y-20, "#e6b07a", 14);
+        game.likes++; game.pontos += 50;
+        SFX.pick(); particulas(it.x, it.y-20, "#4a8cf0", 14);
       }
     }
   }
@@ -896,7 +908,7 @@ function atualizar(dt){
     if (g.portao.x <= PLAYER_X){ fim(true); return; }
   }
 
-  g.pontos = Math.floor(g.dist) + g.frangos * 50 + g.bonus;
+  g.pontos = Math.floor(g.dist) + g.likes * 50 + g.bonus;
   atualizarHUD();
 }
 
@@ -1129,7 +1141,7 @@ function drawCena(){
       const fy = Math.sin(it.bob) * 5;
       sombra(it.x, it.y + 10, it.w * .7, .25);
       ctx.save();
-      ctx.shadowColor = it.tipo === "banana" ? "#e8c75a" : "#e6b07a";
+      ctx.shadowColor = it.tipo === "cafe" ? "#ff3d7f" : "#4a8cf0";
       ctx.shadowBlur = 12;
       draw(it.sp, it.x - it.w/2, it.y - it.h + 12 + fy, it.px);
       ctx.restore();
@@ -1256,10 +1268,14 @@ function pausar(p){
 }
 
 /* ====================================================================
-   RANKING: este jogo roda sem ranking (o código fica, desligado)
+   RANKING DA GALERA: os placares ficam na mesma planilha do Google dos outros
+   jogos, numa aba só deste ("placares midia e performance")
    ==================================================================== */
-const RANKING_URL = "";
-const RANKING_CHAVE = "";
+// link do app da Web da planilha; enquanto estiver vazio, o jogo roda sem ranking
+const RANKING_URL = "https://script.google.com/macros/s/AKfycbwmY7MXrIh_ujIS6jCfEfB7TLVEIVDZ8ilLzR7FwkJqF5i2_Jv-Wk0SN0kXF7PKxsfo/exec";
+// chave deste jogo na planilha: sem ela não dá pra ler nem gravar este ranking,
+// e com ela não dá pra ver o ranking dos outros jogos
+const RANKING_CHAVE = "mp_8yRDJWXnLVz5Ctj8";
 if (RANKING_URL) for (const x of document.querySelectorAll("[data-ranking]")) x.hidden = false;
 
 const limparNome = v => String(v || "").replace(/[<>]/g, "").trim().slice(0, 16).toUpperCase();
@@ -1363,7 +1379,7 @@ async function abrirRanking(d, volta){
 }
 
 // desenha cada sprite da legenda num canvas pequeno
-const MINIS = { trex:FOTO_TREX, maluco:FOTO_MALUCO, frango:FRANGO, banana:BANANA, estrela:ESTRELA };
+const MINIS = { trex:FOTO_TREX, maluco:FOTO_MALUCO, like:LIKE, cafe:CAFE, estrela:ESTRELA };
 for (const alvo of document.querySelectorAll("[data-sp]")){
   const sp = MINIS[alvo.dataset.sp];
   if (!sp) continue;

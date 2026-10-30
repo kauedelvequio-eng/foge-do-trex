@@ -190,30 +190,34 @@ function cartao(c, img, cx, base, w, h, cor, giro){
   c.restore();
 }
 
-const FRANGO = sprite([
-  "....oooo....",
-  "..oommmmoo..",
-  ".ommmmmmmmo.",
-  ".ommmmmmmmo.",
-  ".ommmmmmMMo.",
-  "..ommmmMMo..",
-  "...obbbo....",
-  "...obbbo....",
-  "..obbbbbo...",
-  "..obbbbbo...",
-  "...ooooo....",
-], { o:"#2a1407", m:"#c2702e", M:"#8e4a1c", b:"#efe3c4" });
+/* like: joinha azul, vale 50 pontos */
+const LIKE = sprite([
+  "....oo......",
+  "...obbo.....",
+  "...obbo.....",
+  "..obbo......",
+  "oooobbooooo.",
+  "occobbbbbbbo",
+  "occobbbbbbo.",
+  "occobbbbbbbo",
+  "occobbbbbbo.",
+  "occobbbbbbo.",
+  "oooooooooo..",
+], { o:"#0d2a5c", b:"#4a8cf0", c:"#1f4fa8" });
 
-const BANANA = sprite([
-  "......ooo...",
-  ".....oyyo...",
-  "....oyyyo...",
-  ".ooyyyyyo...",
-  ".oyyyyyo....",
-  ".oyyyyo.....",
-  "..oyyo......",
-  "...oo.......",
-], { o:"#6b5410", y:"#e8c75a" });
+/* café: o combustível da agência, devolve uma vida */
+const CAFE = sprite([
+  "..w..w......",
+  "...w..w.....",
+  "............",
+  "oooooooo....",
+  "okkkkkkooo..",
+  "ommmmmmo.o..",
+  "ommmmmmo.o..",
+  "ommmmmmooo..",
+  "ommmmmmo....",
+  ".oooooo.....",
+], { o:"#1b2240", m:"#ff3d7f", k:"#6b3a1e", w:"#c9d2f0" });
 
 const ESTRELA = sprite([
   "....ooo....",
@@ -342,7 +346,7 @@ function novoJogo(demo){
     meta: demo ? Infinity : CFG.meta,
     t: 0, scroll: 0, dist: 0,
     vidas: CFG.lives, maxVidas: CFG.lives,
-    pontos: 0, bonus: 0, frangos: 0,
+    pontos: 0, bonus: 0, likes: 0,
     estrelas: 0,          // 3 chamam o criativo
     escudo: escudoURL ? 30 : 0,   // segundos de proteção restantes
     aviso: 0,
@@ -460,11 +464,11 @@ function spawnOnda(){
 
 function spawnItem(){
   const lane = (Math.random()*LANES)|0;
-  const pote = ["frango"];
-  if (game.vidas < game.maxVidas) pote.push("banana");
+  const pote = ["like"];
+  if (game.vidas < game.maxVidas) pote.push("cafe");
   if (game.escudo <= 0) pote.push("estrela", "estrela", "estrela");
   const tipo = pote[(Math.random()*pote.length)|0];
-  const sp = tipo === "banana" ? BANANA : tipo === "estrela" ? ESTRELA : FRANGO;
+  const sp = tipo === "cafe" ? CAFE : tipo === "estrela" ? ESTRELA : LIKE;
   game.itens.push({ tipo, sp, x: W + 20, lane, y: laneY(lane), w: sp.w*PX, h: sp.h*PX, oy: 5, bob: Math.random()*6 });
 }
 
@@ -589,9 +593,9 @@ function atualizar(dt){
     if (it.x < -30){ g.itens.splice(i,1); continue; }
     if (bateu(pBox, caixa(it, .1, .12))){
       g.itens.splice(i,1);
-      if (it.tipo === "banana"){
+      if (it.tipo === "cafe"){
         g.vidas = Math.min(g.maxVidas, g.vidas + 1);
-        SFX.life(); particulas(it.x, it.y-10, "#e8c75a", 12);
+        SFX.life(); particulas(it.x, it.y-10, "#ff3d7f", 12);
       } else if (it.tipo === "estrela"){
         g.estrelas++;
         particulas(it.x, it.y-10, "#ffd84d", 12);
@@ -601,8 +605,8 @@ function atualizar(dt){
           SFX.life();
         } else SFX.pick();
       } else {
-        g.frangos++;
-        SFX.pick(); particulas(it.x, it.y-10, "#e6b07a", 10);
+        g.likes++;
+        SFX.pick(); particulas(it.x, it.y-10, "#4a8cf0", 10);
       }
     }
   }
@@ -633,7 +637,7 @@ function atualizar(dt){
     if (g.portao.x <= PLAYER_X){ fim(true); return; }
   }
 
-  g.pontos = Math.floor(g.dist) + g.frangos * 50 + g.bonus;
+  g.pontos = Math.floor(g.dist) + g.likes * 50 + g.bonus;
 }
 
 /* ====================================================================
@@ -882,7 +886,7 @@ function drawCena(){
       const fy = Math.sin(o.bob) * 2;
       sombra(o.x, o.y + 5, o.w * .7, .25);
       ctx.save();
-      ctx.shadowColor = o.tipo === "estrela" ? "#ffd84d" : "#e6b07a";
+      ctx.shadowColor = o.tipo === "estrela" ? "#ffd84d" : o.tipo === "cafe" ? "#ff3d7f" : "#4a8cf0";
       ctx.shadowBlur = 6;
       draw(o.sp, o.x - o.w/2, o.y - o.h + 5 + fy, PX);
       ctx.restore();

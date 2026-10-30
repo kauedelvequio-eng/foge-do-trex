@@ -8,7 +8,7 @@ do peso, entra na frente segurando tudo.
 
 - `index.html`: o jogo completo, o que abre pelo link. Usa o mesmo motor do
   Vai dá PT (tela cheia na horizontal, dificuldade, arraste analógico, → corre,
-  ← segura), copiado pra cá; o jogo original não foi mexido. Roda sem ranking.
+  ← segura), copiado pra cá; o jogo original não foi mexido.
 - `banner/index.html`: a peça 300x250 jogável, versão compacta pra mídia.
 - `midia-e-performance-300x250.zip`: o banner pronto pra subir no Google Ads /
   DV360 / CM360 (HTML5, com `ad.size` e `clickTag`, que aponta pro jogo
@@ -27,3 +27,13 @@ aceita `?escudo=1`).
 Celular deitado: toque e arraste pra mover entre as raias; arrastar pros lados
 acelera ou segura. Teclado: ↑ ↓ (ou W/S) trocam de raia, → corre, ← segura,
 P pausa, M silencia.
+
+## Ranking da galera
+
+Mesma planilha do Google dos outros jogos, numa aba só deste
+(`placares midia e performance`). O jogo manda a sua chave (`RANKING_CHAVE`) em
+todo pedido e a planilha só mostra e grava o ranking do dono da chave.
+
+## Itens
+
+Like vale 50 pontos, café devolve uma vida e 3 estrelas chamam o criativo de 150KB.
