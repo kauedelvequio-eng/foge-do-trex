@@ -1,26 +1,29 @@
 # Mídia e Performance
 
-Banner jogável 300x250: o cara no vaso desliza pelo painel de mídia desviando
-do T-rex e do maluco. Junte 3 estrelas e o criativo 300x250 de 150KB, bombado no limite
-do peso, entra na frente segurando tudo. A linha de chegada é a CONVERSÃO.
+O cara no vaso atravessa o painel de mídia até a CONVERSÃO, desviando do T-rex
+e do maluco. Junte 3 estrelas e o criativo 300x250 de 150KB, bombado no limite
+do peso, entra na frente segurando tudo.
 
 ## Arquivos
 
-- `index.html`: o jogo inteiro num arquivo só, sem dependência. As fotos do T-rex,
-  do maluco e do cara no vaso vão embutidas nele.
+- `index.html`: o jogo completo, o que abre pelo link. Usa o mesmo motor do
+  Vai dá PT (tela cheia na horizontal, dificuldade, arraste analógico, → corre,
+  ← segura), copiado pra cá; o jogo original não foi mexido. Roda sem ranking.
+- `banner/index.html`: a peça 300x250 jogável, versão compacta pra mídia.
+- `midia-e-performance-300x250.zip`: o banner pronto pra subir no Google Ads /
+  DV360 / CM360 (HTML5, com `ad.size` e `clickTag`, que aponta pro jogo
+  completo). Regere o zip sempre que mexer no `banner/index.html`.
 - `trex-original.png` e `maluco-original.png`: os prints originais, de onde
-  saem os recortes.
-- `midia-e-performance-300x250.zip`: a peça pronta pra subir no
-  Google Ads / DV360 / CM360 (HTML5, com `ad.size` e `clickTag`). Regere o zip
-  sempre que mexer no `index.html`.
+  saem os recortes embutidos nos dois HTML.
 
 ## Rodar
 
-Abrir o `index.html` no navegador resolve. Atalho de teste: `?escudo=1` já
-começa com o criativo em campo.
+Abrir o `index.html` no navegador resolve. Atalhos de teste: `?meta=300`
+encurta a travessia e `?escudo=1` já começa com o criativo em campo (o banner
+aceita `?escudo=1`).
 
-## Regras de banner atendidas
+## Controles
 
-- Tamanho fixo 300x250, peso bem abaixo de 150 KB.
-- Clique pelo `clickTag` (botões SAIBA MAIS); a plataforma troca pelo link da campanha.
-- Som só depois do toque em JOGAR; a animação da tela inicial para em 30 s.
+Celular deitado: toque e arraste pra mover entre as raias; arrastar pros lados
+acelera ou segura. Teclado: ↑ ↓ (ou W/S) trocam de raia, → corre, ← segura,
+P pausa, M silencia.
