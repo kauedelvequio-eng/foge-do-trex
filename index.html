@@ -215,6 +215,23 @@
   .rank li.eu{background:#14254a; border-color:#3ee6ff}
   .rank li:nth-child(1) .pos{color:#ffd84d}
   .rank-msg b{color:#3ee6ff}
+
+  /* relatório da campanha no fim */
+  .relatorio{border:1px solid #2b355e; background:#0b1124cc; padding:8px 14px 9px; max-width:440px; width:100%}
+  .rel-tit{font-size:9px; letter-spacing:.32em; color:#3ee6ff; margin-bottom:6px}
+  .rel-kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+  .rel-kpis div{font-size:8px; letter-spacing:.14em; color:#8a95c4}
+  .rel-kpis b{display:block; font-size:17px; font-weight:400; color:#fff; margin-top:3px; letter-spacing:.02em}
+  #rel-roas.bom{color:#4ad98a} #rel-roas.mau{color:#ff3d7f}
+  .rel-diag{margin-top:6px; font-size:10px; line-height:1.45; color:#c9d2f0}
+  button.zap{border-color:#25d366; color:#25d366}
+  button.zap:hover{background:#25d366; color:#0b1124; border-color:#25d366}
+  @media (max-height:480px){
+    .relatorio{padding:5px 10px 6px}
+    .rel-tit{margin-bottom:3px}
+    .rel-kpis b{font-size:14px; margin-top:1px}
+    .rel-diag{margin-top:3px; font-size:9px}
+  }
 </style>
 </head>
 <body>
@@ -283,8 +300,18 @@
     <p class="lead" id="end-sub"></p>
     <div class="score">
       <div>PONTOS<b id="end-pts">0</b></div>
-      <div>METROS<b id="end-m">0</b></div>
+      <div>ALCANCE<b id="end-m">0</b></div>
       <div>RECORDE<b id="end-best">0</b></div>
+    </div>
+    <div class="relatorio">
+      <div class="rel-tit">RELATÓRIO DA CAMPANHA</div>
+      <div class="rel-kpis">
+        <div>CONVERSÕES<b id="rel-conv">0</b></div>
+        <div>CAFÉS<b id="rel-cafe">0</b></div>
+        <div>CRIATIVOS<b id="rel-cri">0</b></div>
+        <div>ROAS<b id="rel-roas">0x</b></div>
+      </div>
+      <div class="rel-diag" id="rel-diag"></div>
     </div>
     <div class="rank-msg" id="end-rank-msg" data-ranking hidden></div>
     <div class="row" id="end-nome" hidden>
@@ -294,6 +321,7 @@
     <ol class="rank" id="end-rank" data-ranking hidden></ol>
     <div class="row">
       <button class="primary" id="btn-again">TENTAR DE NOVO</button>
+      <button class="zap" id="btn-zap">MANDAR NO ZAP</button>
       <button id="btn-rank2" data-ranking hidden>RANKING</button>
       <button id="btn-menu">MUDAR DIFICULDADE</button>
     </div>
@@ -583,6 +611,9 @@ function novoJogo(){
     pontos: 0,
     bonus: 0,
     likes: 0,
+    cafes: 0,             // para o relatório do fim
+    criativos: 0,
+    danos: 0,
     estrelas: 0,          // 3 chamam o criativo
     escudo: q.has("escudo") ? 30 : 0,   // segundos de proteção restantes
     aviso: 0,             // tempo do aviso na tela
@@ -779,6 +810,7 @@ function bateu(a, b){
 
 function levarDano(obj){
   game.vidas--;
+  game.danos++;
   game.inv = 1.5;
   game.shake = 14;
   SFX.hit();
@@ -874,12 +906,13 @@ function atualizar(dt){
       g.itens.splice(i,1);
       if (it.tipo === "cafe"){
         game.vidas = Math.min(game.maxVidas, game.vidas + 1);
+        game.cafes++;
         SFX.life(); particulas(it.x, it.y-20, "#ff3d7f", 16);
       } else if (it.tipo === "estrela"){
         g.estrelas++;
         particulas(it.x, it.y-20, "#ffd84d", 16);
         if (g.estrelas >= 3){
-          g.estrelas = 0; g.escudo = 9; g.aviso = 1.8;
+          g.estrelas = 0; g.escudo = 9; g.aviso = 1.8; g.criativos++;
           for (let k = 0; k < 9; k++) soltarCoracao(PLAYER_X + (Math.random()-.5)*70, g.y - 110 - Math.random()*30);
           SFX.life();
         } else SFX.pick();
@@ -927,7 +960,7 @@ function atualizar(dt){
    ==================================================================== */
 const FONTE = "ui-monospace, Consolas, monospace";
 const KPIS = [["CTR", "3,2%"], ["ROAS", "4,8x"], ["CPA", "-27%"], ["VIEWS", "1,2M"]];
-const ICONES = ["▶", "♥", "@", "#", "%", "★"];
+const ICONES = ["▶", "$", "@", "#", "%", "★"];
 
 // monitor na parede: alterna gráfico de barras, linha subindo e um KPI
 function monitor(x, y, w, h, n, t){
@@ -1247,6 +1280,44 @@ const VITORIAS = [
   "Nenhum T-rex te pegou. Bora apresentar esse case pro cliente.",
 ];
 
+// ROAS de brincadeira: o retorno são os pontos, o investimento é uma verba base
+// mais o que cada pancada custou. Atravessar sem apanhar dá uns 4x.
+function roas(g){
+  const verba = g.meta * 0.4 + g.danos * g.meta * 0.25;
+  return Math.max(0, Math.round(g.pontos / verba * 10) / 10);
+}
+const virgula = n => String(n).replace(".", ",");
+
+function diagnostico(g, r){
+  if (r < 1 && g.venceu) return "Converteu, mas pagou caro: cada pancada comeu verba.";
+  if (r < 1)   return "Abaixo do break-even. Pausa, revisa o criativo e volta amanhã.";
+  if (r < 2.5) return g.danos ? "Rodou, mas apanhou demais no caminho. Dá pra otimizar." : "Rodou, mas faltou volume. Pega mais like que melhora.";
+  if (r < 4)   return "Campanha saudável. Já dá pra pedir mais verba pro cliente.";
+  return "Escala! Esse case vai pro portfólio da agência.";
+}
+
+function relatorio(g){
+  const r = roas(g);
+  g.roas = r;
+  el("rel-conv").textContent = g.likes;
+  el("rel-cafe").textContent = g.cafes;
+  el("rel-cri").textContent = g.criativos;
+  const er = el("rel-roas");
+  er.textContent = virgula(r.toFixed(1)) + "x";
+  er.className = r >= 2.5 ? "bom" : r < 1 ? "mau" : "";
+  el("rel-diag").textContent = diagnostico(g, r);
+}
+
+// manda o placar no WhatsApp com o link do jogo (no computador abre o WhatsApp Web)
+function compartilhar(){
+  const g = game;
+  const link = location.origin + location.pathname;
+  const texto = (g.venceu ? "Converti" : "Virei lanche de T-rex") +
+    " no Mídia e Performance: " + g.pontos + " pontos, ROAS " + virgula((g.roas || 0).toFixed(1)) + "x" +
+    " no " + cfg.label.toLowerCase() + ". Duvido você bater 🦖\n" + link;
+  window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank", "noopener");
+}
+
 function telaFim(){
   const g = game;
   const recorde = g.pontos > best();
@@ -1259,6 +1330,7 @@ function telaFim(){
   el("end-pts").textContent = g.pontos;
   el("end-m").textContent = Math.floor(g.dist);
   el("end-best").textContent = best();
+  relatorio(g);
   rankingNoFim(g);
   mostrar("scr-end");
 }
@@ -1423,6 +1495,7 @@ for (const b of document.querySelectorAll("[data-dif]")){
 el("btn-start").addEventListener("click", () => { salvarNome(el("nome").value); comecar(); });
 el("btn-again").addEventListener("click", comecar);
 el("btn-menu").addEventListener("click", telaInicio);
+el("btn-zap").addEventListener("click", compartilhar);
 el("btn-resume").addEventListener("click", () => pausar(false));
 
 // ranking: nome, telas e abas
