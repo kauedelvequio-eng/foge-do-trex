@@ -268,6 +268,7 @@
         <span class="rot mau">DESVIA</span>
         <span class="it"><i data-sp="trex"></i>T-rex</span>
         <span class="it"><i data-sp="maluco"></i>maluco</span>
+        <span class="it"><i data-sp="hater"></i>comentário do hater</span>
         <span class="pts mau">cada um tira 1 vida</span>
       </div>
       <div class="grupo">
@@ -366,9 +367,9 @@ const laneY = i => ROAD_TOP + LANE_H * (i + 0.5);
 let PLAYER_X = 170;
 
 const DIF = {
-  facil:   { speed:195, ramp:16, spawn:1.30, dens:0.36, lives:5, meta:900,  label:"FÁCIL"   },
-  normal:  { speed:235, ramp:24, spawn:1.05, dens:0.48, lives:3, meta:1200, label:"NORMAL"  },
-  dificil: { speed:285, ramp:34, spawn:0.80, dens:0.66, lives:2, meta:1600, label:"DIFÍCIL" },
+  facil:   { speed:195, ramp:16, spawn:1.30, dens:0.36, lives:5, meta:900,  label:"FÁCIL",   hater:[15, 22] },
+  normal:  { speed:235, ramp:24, spawn:1.05, dens:0.48, lives:3, meta:1200, label:"NORMAL",  hater:[10, 15] },
+  dificil: { speed:285, ramp:34, spawn:0.80, dens:0.66, lives:2, meta:1600, label:"DIFÍCIL", hater:[7, 11] },
 };
 
 const canvas = document.getElementById("game");
@@ -504,6 +505,28 @@ const SETA = sprite([
 // mesmo desenho todo escuro, para o contorno destacar do fundo
 const METRICAS = [CIFRAO, SETA].map(sp => ({ sp, borda: sprite(sp.rows, { g:"#0b3d1f", b:"#0b3d1f" }) }));
 
+/* o hater: brutamontes barbudo que aparece numa janela ao vivo na parede, berra e atira um comentário */
+const HATER = sprite([
+  "....hhhhhhhh....",
+  "...hhhhhhhhhh...",
+  "..hsssssssssssh.",
+  "..shhhssssshhhs.",
+  "..sseessssseess.",
+  "..ssepssssspess.",
+  "..sssssooossss..",
+  ".bsbbbbbbbbbbsb.",
+  ".bbbmmmmmmmmbbb.",
+  ".bbbmwwwwwwmbbb.",
+  ".bbbbmmmmmmbbbb.",
+  "..bbbbbbbbbbbb..",
+  "tttbbbbbbbbbbttt",
+  "tttttbbbbbbttttt",
+  "tttttttttttttttt",
+], { h:"#1a1410", b:"#2a1d14", s:"#e0a77a", e:"#ffffff", p:"#1a1410", o:"#b8784e", m:"#7a1420", w:"#ffffff", t:"#c0263a" });
+
+const BERROS = ["SAI DA MINHA TIMELINE!", "QUE ANÚNCIO RUIM!", "VOU DENUNCIAR!", "PROPAGANDA DE NOVO?"];
+const COMENTARIOS = ["unfollow", "denunciei", "pulei o ad", "que vergonha", "ninguém liga", "flopou"];
+
 /* o criativo 300x250 de 150KB, bombado no limite do peso: chega com 3 estrelas e segura o que vier.
    é um arquivo com a ponta dobrada, cara de bravo e os braços em double biceps */
 const ARQ_CORPO = [
@@ -544,6 +567,10 @@ const TIPOS = {
     "Atropelado pelo maluco. Ele queria a peça pra ontem.",
   ] },
 };
+TIPOS.comentario = { balao:true, w:0, h:34, extra:150, zig:false, cor:"#ff3d7f", fins:[
+  "Afogado em comentário de hater. Nem o SAC deu conta.",
+  "O hater te cancelou. Tá no trending, mas pelo motivo errado.",
+] };
 
 /* ====================================================================
    3. SOM (WebAudio, sem arquivos)
@@ -584,6 +611,7 @@ const SFX = {
   pick:  () => { beep(660,.07,"square",.05); setTimeout(()=>beep(990,.09,"square",.05),70); },
   life:  () => { beep(520,.08,"triangle",.07); setTimeout(()=>beep(780,.1,"triangle",.07),80); setTimeout(()=>beep(1040,.14,"triangle",.07),170); },
   win:   () => [0,120,240,420].forEach((d,i)=>setTimeout(()=>beep([523,659,784,1047][i],.2,"triangle",.07),d)),
+  hater: () => { beep(150,.12,"sawtooth",.07); setTimeout(()=>beep(110,.2,"sawtooth",.07),120); },
   over:  () => [0,130,260].forEach((d,i)=>setTimeout(()=>beep([330,260,180][i],.26,"sawtooth",.07),d)),
 };
 
@@ -633,6 +661,8 @@ function novoJogo(){
     spawnT: 0.8,
     itemT: 3.2,
     portao: null,       // portão de saída
+    hater: null,        // janela do hater aberta na parede
+    haterT: q.has("hater") ? 1 : cfg.hater[0] + 4,   // segundos até ele aparecer (?hater=1 chama logo)
     acabou: false,
     motivo: "",
     venceu: false,
@@ -863,6 +893,33 @@ function atualizar(dt){
     if (g.itemT <= 0){ spawnItem(); g.itemT = 3.6 + Math.random()*3.4; }
   }
 
+  // hater: aparece, berra mirando a raia onde você está e atira o comentário
+  if (!g.portao && !g.hater){
+    g.haterT -= dt;
+    if (g.haterT <= 0){
+      g.hater = { t: 0, x: Math.round(W * 0.66), lane: g.lane, jogou: false,
+                  berro: BERROS[(Math.random()*BERROS.length)|0] };
+      SFX.hater();
+    }
+  }
+  if (g.hater){
+    const h = g.hater;
+    h.t += dt;
+    if (h.t < 1.25) h.lane = g.lane;              // mira até a hora de atirar
+    if (!h.jogou && h.t >= 1.25){
+      h.jogou = true;
+      const texto = COMENTARIOS[(Math.random()*COMENTARIOS.length)|0];
+      ctx.font = "700 14px " + FONTE;
+      g.obst.push({ tipo: "comentario", t: TIPOS.comentario, texto,
+        x: h.x, lane: h.lane, y: 120, w: ctx.measureText(texto).width + 34, h: 34, oy: -6, rot: 0 });
+      SFX.lane();
+    }
+    if (h.t >= 1.9){
+      g.hater = null;
+      g.haterT = cfg.hater[0] + Math.random() * (cfg.hater[1] - cfg.hater[0]);
+    }
+  }
+
   const pBox = { x: PLAYER_X - 18, y: g.y - 52, w: 36, h: 64 };
   if (g.escudo > 0) pBox.w += 130;  // o criativo segura o que vem pela frente
 
@@ -871,6 +928,7 @@ function atualizar(dt){
     const o = g.obst[i];
     o.x -= (v + o.t.extra * ESC) * dt;
     o.rot += dt * 4;
+    if (o.t.balao) o.y += (laneY(o.lane) - o.y) * Math.min(1, dt * 7);
     if (o.t.zig){
       o.zigT -= dt;
       if (o.zigT <= 0){
@@ -1165,6 +1223,66 @@ function drawCriativo(){
   plaquinha("CRIATIVO 300x250", cx, y - 26, "#ff3d7f");
 }
 
+// janela "ao vivo" na parede com o hater berrando, e a mira piscando na raia
+function drawHater(){
+  const h = game.hater;
+  const abre = Math.min(1, h.t / 0.25, (1.9 - h.t) / 0.25);
+  const jw = 112, jh = 100, x = h.x - jw/2, y = 26;
+  ctx.save();
+  ctx.translate(h.x, y + jh/2);
+  ctx.scale(1, Math.max(0.05, abre));
+  ctx.translate(-h.x, -(y + jh/2));
+  ctx.shadowColor = "#ff3d7f"; ctx.shadowBlur = 16;
+  ctx.fillStyle = "#ff3d7f"; ctx.fillRect(x - 4, y - 4, jw + 8, jh + 8);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#1a0f22"; ctx.fillRect(x, y, jw, jh);
+  // tremendo de raiva
+  const tr = h.t < 1.25 ? Math.sin(h.t * 60) * 2 : 0;
+  draw(HATER, h.x - 40 + tr, y + 22, 5);
+  ctx.fillStyle = "#ff3d7f"; ctx.fillRect(x + 6, y + 6, 46, 13);
+  ctx.fillStyle = "#fff"; ctx.font = "700 9px " + FONTE;
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText("● AO VIVO", x + 9, y + 13);
+  ctx.restore();
+
+  if (abre < 1) return;
+  // berro em cima da janela
+  ctx.save();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "700 15px " + FONTE;
+  ctx.lineWidth = 5; ctx.strokeStyle = "#0b1124";
+  const by = y + jh + 22 + Math.sin(h.t * 30) * 1.5;
+  ctx.strokeText(h.berro, h.x, by);
+  ctx.fillStyle = "#ffd84d"; ctx.fillText(h.berro, h.x, by);
+  // mira na raia que ele vai acertar
+  if (!h.jogou && Math.sin(h.t * 22) > -0.3){
+    const ly = laneY(h.lane);
+    ctx.strokeStyle = "#ff3d7f"; ctx.lineWidth = 3; ctx.setLineDash([10, 8]);
+    ctx.strokeRect(PLAYER_X + 70, ly - LANE_H/2 + 6, W - PLAYER_X - 90, LANE_H - 12);
+    ctx.setLineDash([]);
+    ctx.font = "700 22px " + FONTE; ctx.fillStyle = "#ff3d7f";
+    ctx.fillText("!", W - 40, ly);
+  }
+  ctx.restore();
+}
+
+// balão de comentário negativo voando na raia
+function drawBalao(o){
+  const w = o.w, hh = o.h, x = o.x - w/2, y = o.y - hh + o.oy;
+  ctx.save();
+  ctx.shadowColor = "#ff3d7f"; ctx.shadowBlur = 12;
+  ctx.fillStyle = "#ff3d7f";
+  ctx.fillRect(x - 3, y - 3, w + 6, hh + 6);
+  ctx.beginPath(); ctx.moveTo(x + w - 24, y + hh + 2); ctx.lineTo(x + w - 8, y + hh + 14); ctx.lineTo(x + w - 10, y + hh + 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#fffaf0"; ctx.fillRect(x, y, w, hh);
+  ctx.fillStyle = "#c0263a"; ctx.font = "700 14px " + FONTE;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(o.texto, o.x + 8, y + hh/2 + 1);
+  ctx.fillText("✖", x + 13, y + hh/2 + 1);
+  ctx.restore();
+}
+
 function drawCena(){
   const g = game;
   ctx.save();
@@ -1174,8 +1292,10 @@ function drawCena(){
   drawFundo();
 
   if (g){
+    if (g.hater) drawHater();
     // obstáculos
     for (const o of g.obst){
+      if (o.t.balao){ drawBalao(o); continue; }
       sombra(o.x, o.y + 10, o.w * .8);
       cartao(ctx, o.t.foto, o.x, o.y + 22, o.w, o.h, o.t.borda, Math.sin(o.rot * 1.6) * 0.06);
     }
@@ -1461,7 +1581,7 @@ async function abrirRanking(d, volta){
 }
 
 // desenha cada sprite da legenda num canvas pequeno
-const MINIS = { trex:FOTO_TREX, maluco:FOTO_MALUCO, like:LIKE, cafe:CAFE, estrela:ESTRELA };
+const MINIS = { hater:HATER, trex:FOTO_TREX, maluco:FOTO_MALUCO, like:LIKE, cafe:CAFE, estrela:ESTRELA };
 for (const alvo of document.querySelectorAll("[data-sp]")){
   const sp = MINIS[alvo.dataset.sp];
   if (!sp) continue;
