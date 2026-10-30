@@ -132,7 +132,8 @@ const app = document.getElementById("app");
 function caber(){
   const pagina = innerWidth > W + 20 || innerHeight > H + 20;
   document.documentElement.classList.toggle("pagina", pagina);
-  const k = pagina ? Math.min((innerWidth - 32) / W, (innerHeight - 32) / H) : 1;
+  // no máximo 2x: mais que isso as fotos e os pixels estouram
+  const k = pagina ? Math.min(2, (innerWidth - 32) / W, (innerHeight - 32) / H) : 1;
   app.style.transform = pagina ? "scale(" + k + ")" : "";
   // o canvas ganha resolução junto com a escala, pra não borrar ampliado
   const res = Math.min(dpr * k, 4);
