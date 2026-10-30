@@ -676,10 +676,10 @@ function novoJogo(){
     coracoes: [],
     corT: 0.6,          // próxima métrica subindo
     spawnT: 0.8,
-    itemT: 3.2,
+    itemT: 1.5,
     portao: null,       // portão de saída
     hater: null,        // janela do hater aberta na parede
-    chefeT: q.has("chefe") ? 1 : 12 + Math.random() * 10,   // segundos até o pinguim chefe surgir
+    chefeT: q.has("chefe") ? 1 : 9 + Math.random() * 6,   // segundos até o pinguim chefe surgir
     chefes: 0,
     avisoTxt: "",
     haterT: q.has("hater") ? 1 : cfg.hater[0] + 4,   // segundos até ele aparecer (?hater=1 chama logo)
@@ -815,9 +815,9 @@ function spawnOnda(){
 
 function spawnItem(){
   const lane = (Math.random()*LANES)|0;
-  const pote = ["like", "like"];
+  const pote = ["like", "like", "like", "like"];
   if (game.vidas < game.maxVidas) pote.push("cafe");
-  if (game.escudo <= 0) pote.push("estrela", "estrela", "estrela");
+  if (game.escudo <= 0) pote.push("estrela", "estrela");
   const tipo = pote[(Math.random()*pote.length)|0];
   const sp = tipo === "cafe" ? CAFE : tipo === "estrela" ? ESTRELA : LIKE;
   const px = 5;
@@ -910,7 +910,7 @@ function atualizar(dt){
       g.spawnT = Math.max(0.52, cfg.spawn - acel) * (0.85 + Math.random()*0.35);
     }
     g.itemT -= dt;
-    if (g.itemT <= 0){ spawnItem(); g.itemT = 3.6 + Math.random()*3.4; }
+    if (g.itemT <= 0){ spawnItem(); g.itemT = 1.5 + Math.random()*1.4; }
   }
 
   // hater: aparece, berra mirando a raia onde você está e atira o comentário
@@ -948,7 +948,7 @@ function atualizar(dt){
       g.itens.push({ tipo: "chefe", sp: CHEFE, px, x, lane, y: laneY(lane), w: CHEFE.w*px, h: CHEFE.h*px, oy: 12, bob: 0, extra: 70 });
       particulas(x, laneY(lane) - 30, "#e6ebff", 22);
       SFX.pick();
-      g.chefeT = 20 + Math.random() * 12;
+      g.chefeT = 14 + Math.random() * 8;
     }
   }
 
