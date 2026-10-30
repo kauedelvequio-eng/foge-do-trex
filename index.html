@@ -291,7 +291,7 @@
       <button id="btn-rank" data-ranking hidden>VER RANKING</button>
     </div>
     <div class="foot" id="best-start"></div>
-    <div class="foot">versão 30/10 · 16h</div>
+    <div class="foot">versão 30/10 · 16h30</div>
   </div>
 
   <!-- FIM -->
@@ -822,8 +822,8 @@ function spawnItem(){
   const tipo = pote[(Math.random()*pote.length)|0];
   const sp = tipo === "cafe" ? CAFE : tipo === "estrela" ? ESTRELA : LIKE;
   const px = 5;
-  // like costuma vir em fileira de 3 a 5 na mesma raia
-  const n = tipo === "like" && Math.random() < 0.6 ? 3 + ((Math.random()*3)|0) : 1;
+  // de vez em quando o like vem em fileira de 3 na mesma raia
+  const n = tipo === "like" && Math.random() < 0.3 ? 3 : 1;
   for (let k = 0; k < n; k++)
     game.itens.push({ tipo, sp, px, x: W + 40 + k*78, lane, y: laneY(lane), w: sp.w*px, h: sp.h*px, oy: 12, bob: k*0.8 });
 }
@@ -914,7 +914,7 @@ function atualizar(dt){
       g.spawnT = Math.max(0.52, cfg.spawn - acel) * (0.85 + Math.random()*0.35);
     }
     g.itemT -= dt;
-    if (g.itemT <= 0){ spawnItem(); g.itemT = 1.1 + Math.random()*1.1; }
+    if (g.itemT <= 0){ spawnItem(); g.itemT = 1.6 + Math.random()*1.4; }
   }
 
   // hater: aparece, berra mirando a raia onde você está e atira o comentário
